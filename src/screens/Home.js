@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Button, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import useNetworkStatus from '../services/connectivity';  
 const Home = ({ navigation }) => {
   const [userData, setUserData] = useState({
     user_id: null,
     firstname: '',
     lastname: '',
   });
+
+  const { isOnline, connected } = useNetworkStatus(userData.user_id);  // Get network status and WebSocket connection status
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -30,6 +32,12 @@ const Home = ({ navigation }) => {
 
     fetchUserData();
   }, []);
+
+  useEffect(() => {
+    if (!isOnline) {
+     
+    }
+  }, [isOnline]);
 
   const handleLogout = async () => {
     try {
@@ -57,6 +65,16 @@ const Home = ({ navigation }) => {
         </>
       )}
       <Button title="Logout" onPress={handleLogout} />
+      {isOnline ? (
+        <Text style={styles.status}>Connected to the internet!</Text>
+      ) : (
+        <Text style={styles.status}>No internet connection. Reconnecting...</Text>
+      )}
+      {connected ? (
+        <Text style={styles.status}>WebSocket connected!</Text>
+      ) : (
+        <Text style={styles.status}>WebSocket not connected.</Text>
+      )}
     </View>
   );
 };
@@ -65,6 +83,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   title: { fontSize: 24, marginBottom: 20, textAlign: 'center' },
   userInfo: { fontSize: 18, marginBottom: 10, textAlign: 'center' },
+  status: { fontSize: 16, marginTop: 20, textAlign: 'center' },
 });
 
 export default Home;

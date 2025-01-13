@@ -1,39 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';  // Import useFocusEffect
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const JournalList = ({ navigation }) => {
   const [journalEntries, setJournalEntries] = useState([]);
+  
+  // Monitor network status
+  const userId =  AsyncStorage.getItem('userId');
+
 
   // Load journal entries from AsyncStorage when the screen is focused
   useFocusEffect(
     React.useCallback(() => {
       const loadEntries = async () => {
         try {
-          // Replace with the actual current user's ID from your auth logic
-          const currentUserId = await AsyncStorage.getItem('userId');
-          
+          const userId = await AsyncStorage.getItem('userId');
           const entries = JSON.parse(await AsyncStorage.getItem('journalEntries')) || [];
-          // Filter entries by the current user's ID
-          const userEntries = entries.filter(entry => entry.user_id === currentUserId);
-          
+          const userEntries = entries.filter(entry => entry.user_id === userId);
           setJournalEntries(userEntries);
         } catch (error) {
           console.error('Error loading journal entries:', error);
           Alert.alert('Error', 'Failed to load journal entries.');
         }
       };
-  
+
       loadEntries();
     }, []) // Empty dependency array ensures the effect runs on focus
   );
-  
 
-  // Navigate to create journal screen
-  const handleAddJournal = () => {
-    navigation.navigate('CreateJournal');
-  };
+
 
   // Handle journal entry click
   const handleViewJournal = (item) => {
@@ -44,9 +40,7 @@ const JournalList = ({ navigation }) => {
     <View style={styles.container}>
       <Text style={styles.header}>Your Journal Entries</Text>
 
-      <TouchableOpacity style={styles.addButton} onPress={handleAddJournal}>
-        <Text style={styles.addButtonText}>+ Add New Journal</Text>
-      </TouchableOpacity>
+
 
       <FlatList
         data={journalEntries}

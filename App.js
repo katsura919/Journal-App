@@ -1,20 +1,35 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect } from 'react';
+import AppNavigator from './src/AppNavigator';
+import { SQLiteProvider } from 'expo-sqlite';
 
-export default function App() {
+const App = () => {
+
+  const initializeDatabase = async (db) => {
+    try {
+      await db.execAsync(`
+        PRAGMA journal_mode = WAL;
+        
+          CREATE TABLE IF NOT EXISTS journal_entries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL, -- Link to the logged-in user
+            title TEXT,
+            content TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME,
+            is_synced BOOLEAN DEFAULT 0
+          );
+  
+      `);
+      console.log('Database initialized!');
+    } catch (error) {
+      console.log('Error while initializing the database:', error);
+    }
+  };
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SQLiteProvider databaseName='auth.db' onInit={initializeDatabase}>
+      <AppNavigator />
+    </SQLiteProvider>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default App;

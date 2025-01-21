@@ -9,16 +9,17 @@ const App = () => {
       await db.execAsync(`
         PRAGMA journal_mode = WAL;
         
-          CREATE TABLE IF NOT EXISTS journal_entries (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL, -- Link to the logged-in user
-            title TEXT,
-            content TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME,
-            is_synced BOOLEAN DEFAULT 0
+        CREATE TABLE IF NOT EXISTS journal_entries (
+            entry_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            deleted_at TEXT,
+            version INTEGER,
+            sync_status TEXT
           );
-  
       `);
       console.log('Database initialized!');
     } catch (error) {

@@ -1,6 +1,6 @@
 import NetInfo from '@react-native-community/netinfo';
 import { useEffect, useState } from 'react';
-import { syncJournals } from './websocket';  // Function to sync journals to the server
+import { pullAndSyncJournals } from './websocket';  // Function to sync journals to the server
 import { useWebSocket } from './websocket';  // Import your WebSocket hook
 
 const useNetworkStatus = (userId) => {
@@ -17,7 +17,7 @@ const useNetworkStatus = (userId) => {
           // Connect to WebSocket when the device is online
           console.log('Connecting to WebSocket...');
         }
-        syncJournals(userId);  // Sync journals when the device comes online
+        pullAndSyncJournals(userId);  // Sync journals when the device comes online
       } else {
         setIsOnline(false);
         console.log('Device is offline');

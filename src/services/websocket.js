@@ -13,10 +13,13 @@ const useWebSocket = (userId) => {
       socket = new WebSocket(`ws://10.0.2.2:5000?userId=${userId}`);
 
       // Handle connection opened
-      socket.onopen = () => {
+      socket.onopen = async () => {
         setConnected(true);
         console.log('Connected to WebSocket', userId);
-        syncJournals(userId);  // Sync journals when the WebSocket is open
+
+        // Pull journals from server and sync local journals
+        await pullAndSyncJournals(userId);
+
         setRetryCount(0); // Reset retry count on successful connection
       };
 
@@ -36,7 +39,6 @@ const useWebSocket = (userId) => {
       socket.onclose = () => {
         setConnected(false);
         console.log('Disconnected from WebSocket');
-        // Start reconnecting with an interval
         reconnectWebSocket();
       };
     };
@@ -46,7 +48,7 @@ const useWebSocket = (userId) => {
         const retryDelay = Math.pow(2, retryCount) * 1000; // Exponential backoff
         reconnectInterval = setTimeout(() => {
           console.log('Reconnecting to WebSocket...');
-          setRetryCount(prev => prev + 1); // Increment retry count
+          setRetryCount((prev) => prev + 1); // Increment retry count
           connectWebSocket(); // Try reconnecting
         }, retryDelay);
       } else {
@@ -71,42 +73,92 @@ const useWebSocket = (userId) => {
   return { socket, connected };
 };
 
-// Function to sync journals
-const syncJournals = async (userId) => {
+// Function to pull and sync journals
+const pullAndSyncJournals = async (userId) => {
   try {
-    // Fetch all journals from AsyncStorage
-    const journals = JSON.parse(await AsyncStorage.getItem('journalEntries')) || [];
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      // Request journals from server
+      socket.send(JSON.stringify({ type: 'pull_journals', userId }));
 
-    // Filter journals for the current user and unsynced ones
-    const unsyncedJournals = journals.filter(journal => journal.user_id === userId && !journal.is_synced);
+      // Wait for server response
+      socket.onmessage = async (event) => {
+        const data = JSON.parse(event.data);
 
-    // If there are unsynced journals, send them
+        if (data.type === 'journal_entries') {
+          const serverJournals = data.journals || [];
+
+          // Fetch local journals
+          const localJournals = JSON.parse(await AsyncStorage.getItem('journalEntries')) || [];
+
+          // Merge server journals with local journals
+          const mergedJournals = mergeJournals(serverJournals, localJournals);
+
+          // Save merged journals to local storage
+          await AsyncStorage.setItem('journalEntries', JSON.stringify(mergedJournals));
+          console.log('Journals merged and saved locally.');
+
+          // Sync unsynced journals
+          syncUnsyncedJournals(userId, mergedJournals);
+        }
+      };
+    } else {
+      console.error('WebSocket is not open. Cannot pull journals.');
+    }
+  } catch (error) {
+    console.error('Error pulling and syncing journals:', error);
+  }
+};
+
+// Function to merge server and local journals
+const mergeJournals = (serverJournals, localJournals) => {
+  const journalMap = new Map();
+
+  // Add server journals to the map (server entries take priority)
+  serverJournals.forEach((journal) => journalMap.set(journal.id, journal));
+
+  // Add local journals to the map (only if not present in server journals)
+  localJournals.forEach((journal) => {
+    if (!journalMap.has(journal.id)) {
+      journalMap.set(journal.id, journal);
+    }
+  });
+
+  return Array.from(journalMap.values());
+};
+
+// Function to sync unsynced local journals
+const syncUnsyncedJournals = async (userId, mergedJournals) => {
+  try {
+    const unsyncedJournals = mergedJournals.filter(
+      (journal) => journal.user_id === userId && !journal.is_synced
+    );
+
     if (unsyncedJournals.length > 0) {
       if (socket && socket.readyState === WebSocket.OPEN) {
         // Send the unsynced journals to the server
         socket.send(JSON.stringify({ type: 'sync_journals', journals: unsyncedJournals }));
         console.log('Sending unsynced journals for user:', userId, unsyncedJournals);
 
-        // After sending, update the journals to set is_synced to true
-        const updatedJournals = journals.map(journal => {
+        // Mark journals as synced locally
+        const updatedJournals = mergedJournals.map((journal) => {
           if (journal.user_id === userId && !journal.is_synced) {
             return { ...journal, is_synced: true };
           }
           return journal;
         });
 
-        // Save the updated journals back to AsyncStorage
+        // Save updated journals back to AsyncStorage
         await AsyncStorage.setItem('journalEntries', JSON.stringify(updatedJournals));
-        console.log('Updated journal entries with is_synced set to true');
+        console.log('Updated journal entries with is_synced set to true.');
       } else {
-        console.error('WebSocket is not open or available');
+        console.error('WebSocket is not open or available.');
       }
     } else {
-      console.log('No unsynced journals found for user:', userId);
+      console.log('No unsynced journals to sync.');
     }
   } catch (error) {
-    console.error('Error syncing journals for user:', userId, error);
+    console.error('Error syncing unsynced journals:', error);
   }
 };
 
-export { useWebSocket, syncJournals };
+export { useWebSocket, pullAndSyncJournals };

@@ -1,24 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';  // Import useFocusEffect
+import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
+import { useSQLiteContext } from 'expo-sqlite'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const JournalList = ({ navigation }) => {
+  const db = useSQLiteContext(); // Get the SQLite database context
   const [journalEntries, setJournalEntries] = useState([]);
   
-  // Monitor network status
-  const userId =  AsyncStorage.getItem('userId');
-
-
-  // Load journal entries from AsyncStorage when the screen is focused
+  
   useFocusEffect(
     React.useCallback(() => {
       const loadEntries = async () => {
         try {
           const userId = await AsyncStorage.getItem('userId');
-          const entries = JSON.parse(await AsyncStorage.getItem('journalEntries')) || [];
-          const userEntries = entries.filter(entry => entry.user_id === userId);
-          setJournalEntries(userEntries);
+
+          if (!userId) {
+            Alert.alert('Error', 'User ID not found. Please log in again.');
+            return;
+          }
+
+          // Query the SQLite database to get journal entries for the current user
+          const result = await db.getAllAsync(
+            'SELECT * FROM journal_entries WHERE user_id = ? ORDER BY created_at DESC',
+            [userId]
+          );
+
+          setJournalEntries(result); // Set the entries to the state
         } catch (error) {
           console.error('Error loading journal entries:', error);
           Alert.alert('Error', 'Failed to load journal entries.');
@@ -29,8 +37,6 @@ const JournalList = ({ navigation }) => {
     }, []) // Empty dependency array ensures the effect runs on focus
   );
 
-
-
   // Handle journal entry click
   const handleViewJournal = (item) => {
     navigation.navigate('ViewJournal', { journal: item });
@@ -40,19 +46,16 @@ const JournalList = ({ navigation }) => {
     <View style={styles.container}>
       <Text style={styles.header}>Your Journal Entries</Text>
 
-
-
       <FlatList
         data={journalEntries}
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.entry} onPress={() => handleViewJournal(item)}>
             <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.title}>{item.user_id}</Text>
             <Text style={styles.date}>{new Date(item.created_at).toLocaleDateString()}</Text>
             <Text style={styles.content}>{item.content.slice(0, 100)}...</Text>
           </TouchableOpacity>
         )}
-        keyExtractor={(item, index) => index.toString()}
+        keyExtractor={(item) => item.entry_id.toString()} // Use entry_id as the key
       />
     </View>
   );
@@ -68,17 +71,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-  },
-  addButton: {
-    backgroundColor: '#4CAF50',
-    padding: 10,
-    marginBottom: 15,
-    borderRadius: 5,
-    alignItems: 'center',
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 16,
   },
   entry: {
     padding: 15,

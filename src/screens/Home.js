@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Button, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import useNetworkStatus from '../services/connectivity';  
+import NetInfo from '@react-native-community/netinfo';
+import { useSQLiteContext } from 'expo-sqlite';
+import { syncIfOnline } from './utils/syncUtils'; // Import the sync utility
+
 const Home = ({ navigation }) => {
+  const db = useSQLiteContext(); // Initialize SQLite context
+  const [internet, setInternet] = useState();
   const [userData, setUserData] = useState({
     user_id: null,
     firstname: '',
     lastname: '',
   });
 
-  const { isOnline, connected } = useNetworkStatus(userData.user_id);  // Get network status and WebSocket connection status
-
+  // Fetch user data and listen for network changes to sync data when online
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -18,9 +22,27 @@ const Home = ({ navigation }) => {
         const firstname = await AsyncStorage.getItem('firstname');
         const lastname = await AsyncStorage.getItem('lastname');
 
-        // Check if values exist in AsyncStorage and update state
         if (user_id && firstname && lastname) {
           setUserData({ user_id, firstname, lastname });
+
+          // Start listening for network changes
+          const unsubscribe = NetInfo.addEventListener(async (state) => {
+            console.log("Network state changed:", state.isConnected ? "Online" : "Offline");
+            setInternet(state.isConnected ? "Online" : "Offline");
+
+            if (state.isConnected) {
+              try {
+                await syncIfOnline(user_id, db); // Call the sync function
+                Alert.alert("Success", "Data synchronization completed successfully!");
+              } catch (error) {
+                console.error("Error during synchronization:", error);
+                Alert.alert("Error", "An error occurred during synchronization. Please try again.");
+              }
+            }
+          });
+
+          // Cleanup the listener when the component unmounts
+          return () => unsubscribe();
         } else {
           Alert.alert('Error', 'User data is missing. Please log in again.');
         }
@@ -33,20 +55,12 @@ const Home = ({ navigation }) => {
     fetchUserData();
   }, []);
 
-  useEffect(() => {
-    if (!isOnline) {
-     
-    }
-  }, [isOnline]);
-
   const handleLogout = async () => {
     try {
-      // Clear the token and other user data, then navigate to the Login screen
       await AsyncStorage.removeItem('userToken');
-      await AsyncStorage.removeItem('user_id');
+      await AsyncStorage.removeItem('userId');
       await AsyncStorage.removeItem('firstname');
       await AsyncStorage.removeItem('lastname');
-
       Alert.alert('Logged Out', 'You have been logged out successfully.');
       navigation.replace('Login');
     } catch (error) {
@@ -62,19 +76,10 @@ const Home = ({ navigation }) => {
           <Text style={styles.userInfo}>User ID: {userData.user_id}</Text>
           <Text style={styles.userInfo}>First Name: {userData.firstname}</Text>
           <Text style={styles.userInfo}>Last Name: {userData.lastname}</Text>
+          <Text style={styles.userInfo}>{internet}</Text>
         </>
       )}
       <Button title="Logout" onPress={handleLogout} />
-      {isOnline ? (
-        <Text style={styles.status}>Connected to the internet!</Text>
-      ) : (
-        <Text style={styles.status}>No internet connection. Reconnecting...</Text>
-      )}
-      {connected ? (
-        <Text style={styles.status}>WebSocket connected!</Text>
-      ) : (
-        <Text style={styles.status}>WebSocket not connected.</Text>
-      )}
     </View>
   );
 };

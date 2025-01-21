@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // If you want to store entries locally or replace with your SQLite logic
+import { useSQLiteContext } from 'expo-sqlite';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo'; // Import NetInfo
+import { syncIfOnline } from './utils/syncUtils'; // Import the sync utility
 
 const CreateJournal = ({ navigation }) => {
+  const db = useSQLiteContext();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
 
@@ -13,34 +17,45 @@ const CreateJournal = ({ navigation }) => {
     }
 
     try {
-      // Retrieve the user_id from AsyncStorage (or other storage)
-      const user_id = await AsyncStorage.getItem('userId');
+      // Fetch user_id from AsyncStorage
+      const userId = await AsyncStorage.getItem('userId');
 
-      if (!user_id) {
+      if (!userId) {
         Alert.alert('Error', 'User ID not found. Please log in again.');
         return;
       }
 
-      const journalEntry = {
-        user_id, // Include user_id in the journal entry
-        title,
-        content,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        is_synced: false, // Assuming the entry is not synced initially
-      };
+      const createdAt = new Date().toISOString();
+      const updatedAt = new Date().toISOString();
 
-      // Save the journal entry to AsyncStorage or your SQLite database
-      const existingEntries = JSON.parse(await AsyncStorage.getItem('journalEntries')) || [];
-      existingEntries.push(journalEntry);
-      await AsyncStorage.setItem('journalEntries', JSON.stringify(existingEntries));
+      // Insert journal entry into the database
+      await db.runAsync(
+        'INSERT INTO journal_entries (user_id, title, content, created_at, updated_at, sync_status) VALUES (?, ?, ?, ?, ?, ?)',
+        [userId, title, content, createdAt, updatedAt, 'pending'] // 'pending' as default sync status
+      );
 
-      Alert.alert('Success', 'Journal entry created!');
+      // Reset fields after adding the journal entry
       setTitle('');
       setContent('');
+      Alert.alert('Success', 'Journal entry created!');
+
+      // Check if the device is online
+      const netInfo = await NetInfo.fetch();
+      if (netInfo.isConnected) {
+        try {
+          await syncIfOnline(userId, db); // Call the sync function
+          Alert.alert('Success', 'Data synchronized with the server!');
+        } catch (syncError) {
+          console.error('Error during synchronization:', syncError);
+          Alert.alert('Error', 'Failed to synchronize data. It will be retried later.');
+        }
+      } else {
+        console.log('Offline: Sync will be retried later.');
+      }
+
       navigation.goBack(); // Navigate back after saving the entry
     } catch (error) {
-      console.error('Error saving journal entry:', error);
+      console.error('Error inserting journal entry:', error);
       Alert.alert('Error', 'Failed to save journal entry.');
     }
   };
@@ -65,7 +80,6 @@ const CreateJournal = ({ navigation }) => {
       />
 
       <Button title="Save Journal" onPress={handleSaveJournal} />
-
     </View>
   );
 };

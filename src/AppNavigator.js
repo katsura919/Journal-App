@@ -3,10 +3,12 @@ import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+
 import Login from './screens/Login';
 import Register from './screens/Register';
 import BottomNavigator from './BottomNavigator'; // Import the BottomNavigator
 import ViewJournal from './screens/ViewJournal';
+import Chat from './screens/Chat';
 const Stack = createStackNavigator();
 
 const AppNavigator = () => {
@@ -43,8 +45,6 @@ const AppNavigator = () => {
             <Stack.Screen name="Login" component={Login} />
             <Stack.Screen name="Register" component={Register} />
             <Stack.Screen name="Home" component={BottomNavigator} />
-            <Stack.Screen name="ViewJournal" component={ViewJournal} />
-        
       </Stack.Navigator>
     </NavigationContainer>
   );

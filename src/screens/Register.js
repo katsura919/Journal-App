@@ -11,7 +11,7 @@ const Register = ({ navigation }) => {
 
   const handleRegister = async () => {
     try {
-      const response = await axios.post('http://10.0.2.2:5000/auth/register', {
+      const response = await axios.post('https://journal-server-ot0w.onrender.com/auth/register', {
         username,
         email,
         password,

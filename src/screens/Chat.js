@@ -25,7 +25,7 @@ const ChatScreen = () => {
         })),
       };
 
-      const response = await axios.post("http://10.0.2.2:5000/api/chat", chatData, {
+      const response = await axios.post("https://journal-server-ot0w.onrender.com/api/chat", chatData, {
         headers: {
           "Content-Type": "application/json",
         },

@@ -13,7 +13,7 @@ export const syncIfOnline = async (userId, db) => {
       [userId]
     );
 
-    const response = await axios.get('http://10.0.2.2:5000/syncToClient', {
+    const response = await axios.get('https://journal-server-ot0w.onrender.com/syncToClient', {
       params: { last_sync_timestamp },
     });
 
@@ -70,7 +70,7 @@ export const syncIfOnline = async (userId, db) => {
       version: entry.version || 1,
     }));
 
-    const pushResponse = await axios.post('http://10.0.2.2:5000/syncToServer', {
+    const pushResponse = await axios.post('https://journal-server-ot0w.onrender.com/syncToServer', {
       entries: entriesToPush,
     });
 

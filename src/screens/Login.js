@@ -9,7 +9,7 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post('http://10.0.2.2:5000/auth/login', { username, password });
+      const response = await axios.post('https://journal-server-ot0w.onrender.com/auth/login', { username, password });
       const { token, user} = response.data;
 
       console.log(user.user_id, user.firstname, user.lastname);

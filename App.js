@@ -16,7 +16,7 @@ const App = () => {
             content TEXT NOT NULL,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
-            deleted_at TEXT,
+            journal_status TEXT,
             version INTEGER,
             sync_status TEXT
           );

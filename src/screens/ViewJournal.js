@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, Text, StyleSheet, TouchableOpacity, Alert, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';  // Import Ionicons for the back button
 import { useSQLiteContext } from 'expo-sqlite'; // Assuming you are using expo-sqlite for database access
 
@@ -9,6 +8,7 @@ const ViewJournal = ({ route, navigation }) => {
   const [title, setTitle] = useState(journal.title);
   const [content, setContent] = useState(journal.content);
   const db = useSQLiteContext(); // Get the SQLite database context
+  console.log(journal.entry_id)
 
   // Save the edited journal to SQLite
   const handleSave = async () => {
@@ -19,35 +19,37 @@ const ViewJournal = ({ route, navigation }) => {
 
     try {
       const updatedAt = new Date().toISOString();
-
+    
       // Update the journal entry in the database
       await db.runAsync(
-        'UPDATE journal_entries SET title = ?, content = ?, updated_at = ? WHERE entry_id = ?',
-        [title, content, updatedAt, journal.entry_id]  // Use entry_id to update specific journal
+        'UPDATE journal_entries SET title = ?, content = ?, updated_at = ?, sync_status = ? WHERE entry_id = ?',
+        [title, content, updatedAt, 'pending', journal.entry_id]
       );
-
+    
       Alert.alert('Success', 'Journal updated successfully!');
       navigation.goBack();  // Go back to the previous screen
     } catch (error) {
       console.error('Error saving edited journal:', error);
       Alert.alert('Error', 'Failed to save the journal.');
     }
+    
   };
 
   // Delete the journal entry
   const handleDelete = async () => {
     try {
       await db.runAsync(
-        'UPDATE journal_entries SET sync_status = ? WHERE journal_id = ?',
-        ['deleted', journalId]  // Mark the entry as deleted in the local database
+        'UPDATE journal_entries SET journal_status = ?, sync_status = ? WHERE entry_id = ?',
+        ['deleted', 'pending', journal.entry_id]  // Mark the entry as deleted in the local database
       );
-
+    
       Alert.alert('Success', 'Journal deleted successfully!');
       navigation.goBack();  // Navigate back after deletion
     } catch (error) {
       console.error('Error deleting journal:', error);
       Alert.alert('Error', 'Failed to delete the journal.');
     }
+    
   };
 
   // Handle dismiss keyboard when tapping outside input fields

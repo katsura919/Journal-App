@@ -4,12 +4,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 const LoginScreen = ({ navigation }) => {
+  const localAPI = 'http://10.0.2.2:5000'
+  const deployAPI = 'https://journal-server-ot0w.onrender.com'
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post('https://journal-server-ot0w.onrender.com/auth/login', { username, password });
+      const response = await axios.post(`${localAPI}/auth/login`, { username, password });
       const { token, user} = response.data;
 
       console.log(user.user_id, user.firstname, user.lastname);

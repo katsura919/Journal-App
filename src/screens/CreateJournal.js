@@ -30,8 +30,8 @@ const CreateJournal = ({ navigation }) => {
 
       // Insert journal entry into the database
       await db.runAsync(
-        'INSERT INTO journal_entries (user_id, title, content, created_at, updated_at, sync_status) VALUES (?, ?, ?, ?, ?, ?)',
-        [userId, title, content, createdAt, updatedAt, 'pending'] // 'pending' as default sync status
+        'INSERT INTO journal_entries (user_id, title, content, created_at, updated_at, journal_status, sync_status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [userId, title, content, createdAt, updatedAt,'active', 'pending'] // 'pending' as default sync status
       );
 
       // Reset fields after adding the journal entry

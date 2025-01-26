@@ -3,6 +3,8 @@ import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
 
 const Register = ({ navigation }) => {
+  const localAPI = 'http://10.0.2.2:5000'
+  const deployAPI = 'https://journal-server-ot0w.onrender.com'
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -11,7 +13,7 @@ const Register = ({ navigation }) => {
 
   const handleRegister = async () => {
     try {
-      const response = await axios.post('https://journal-server-ot0w.onrender.com/auth/register', {
+      const response = await axios.post(`${localAPI}/auth/register`, {
         username,
         email,
         password,

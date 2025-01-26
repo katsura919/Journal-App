@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const JournalList = ({ navigation }) => {
   const db = useSQLiteContext(); // Get the SQLite database context
   const [journalEntries, setJournalEntries] = useState([]);
-  
+  console.log(journalEntries)
   
   useFocusEffect(
     React.useCallback(() => {
@@ -22,7 +22,8 @@ const JournalList = ({ navigation }) => {
 
           // Query the SQLite database to get journal entries for the current user
           const result = await db.getAllAsync(
-            'SELECT * FROM journal_entries WHERE user_id = ? ORDER BY created_at DESC',
+            `SELECT * FROM journal_entries WHERE user_id = ? AND journal_status = 'deleted' ORDER BY created_at DESC
+`,
             [userId]
           );
 

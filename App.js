@@ -20,6 +20,14 @@ const App = () => {
             version INTEGER,
             sync_status TEXT
           );
+        
+        CREATE TABLE IF NOT EXISTS moods (
+            mood_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            mood TEXT,  
+            date TEXT,  -- Store the date in 'YYYY-MM-DD' format
+            created_at TEXT
+          );
       `);
       console.log('Database initialized!');
     } catch (error) {

@@ -7,7 +7,7 @@ import JournalList from './screens/JournalLists';
 import Profile from './screens/Profile'; // Assuming you have a Profile screen
 import Settings from './screens/Settings'; // Assuming you have a Settings screen
 import Chat from './screens/Chat';
-
+import Chats from './screens/Chats';
 const Tab = createBottomTabNavigator();
 
 const BottomNavigator = () => {
@@ -39,7 +39,7 @@ const BottomNavigator = () => {
       <Tab.Screen name="Create" component={CreateJournal} />
       <Tab.Screen name="Lists" component={JournalList} />
       <Tab.Screen name="Profile" component={Profile} />
-      <Tab.Screen name="Chat" component={Chat} />
+      <Tab.Screen name="Chats" component={Chats} />
     </Tab.Navigator>
   );
 };

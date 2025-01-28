@@ -5,7 +5,7 @@ import { getMoodForToday, saveMood } from './utils/moodUtils';
 import { useSQLiteContext } from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
-import { syncIfOnline } from './utils/syncUtils';
+import { syncIfOnline, syncMoodsIfOnline } from './utils/syncUtils';
 import MoodSelector from './components/MoodSelector.js';
 
 const Home = ({ navigation }) => {
@@ -61,6 +61,7 @@ const Home = ({ navigation }) => {
             if (state.isConnected) {
               try {
                 await syncIfOnline(user_id, db);
+                await syncMoodsIfOnline(user_id, db);
                 Alert.alert('Success', 'Data synchronization completed successfully!');
               } catch (error) {
                 console.error('Error during synchronization Home:', error);

@@ -1,4 +1,4 @@
-// Profile.js
+// Insights.js
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -15,7 +15,8 @@ const Insights = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
   const [currentMood, setCurrentMood] = useState("");
-
+  const [syncStatus, setSyncStatus] = useState("unsynced");
+  console.log(moodEntries);
   useEffect(() => {
     const fetchUserId = async () => {
       const storedUserId = await AsyncStorage.getItem("userId");
@@ -38,7 +39,7 @@ const Insights = () => {
 
     try {
       const result = await db.getAllAsync(
-        "SELECT * FROM moods WHERE date LIKE ? AND user_id = ? ORDER BY created_at DESC",
+        "SELECT * FROM moods WHERE created_at LIKE ? AND user_id = ? ORDER BY created_at DESC",
         [dateLike, userId]
       );
       setMoodEntries(result);
@@ -74,7 +75,7 @@ const Insights = () => {
 
     for (let day = 1; day <= daysInMonth; day++) {
       const dateKey = `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      const entry = moodEntries.find((entry) => entry.date === dateKey);
+      const entry = moodEntries.find((entry) => entry.created_at.startsWith(dateKey));
       const mood = entry ? entry.mood : null;
       const isToday = dateKey === today;
 
@@ -85,7 +86,7 @@ const Insights = () => {
   };
 
   const addOrEditMood = (date) => {
-    const existingEntry = moodEntries.find((entry) => entry.date === date);
+    const existingEntry = moodEntries.find((entry) => entry.created_at.startsWith(date));
     setSelectedDate(date);
 
     if (!existingEntry) {
@@ -100,21 +101,21 @@ const Insights = () => {
   const saveMood = async () => {
     if (currentMood) {
       try {
-        if (moodEntries.some((entry) => entry.date === selectedDate)) {
+        if (moodEntries.some((entry) => entry.created_at.startsWith(selectedDate))) {
           await db.runAsync(
-            "UPDATE moods SET mood = ? WHERE date = ? AND user_id = ?",
-            [currentMood, selectedDate, userId]
+            "UPDATE moods SET mood = ?, sync_status = ? WHERE created_at LIKE ? AND user_id = ?",
+            [currentMood, "unsynced", `${selectedDate}%`, userId]
           );
         } else {
           await db.runAsync(
-            "INSERT INTO moods (user_id, date, mood) VALUES (?, ?, ?)",
-            [userId, selectedDate, currentMood]
+            "INSERT INTO moods (user_id, created_at, mood, sync_status) VALUES (?, ?, ?, ?)",
+            [userId, selectedDate, currentMood, "unsynced"]
           );
         }
 
         setMoodEntries((prevEntries) =>
           prevEntries.map((entry) =>
-            entry.date === selectedDate ? { ...entry, mood: currentMood } : entry
+            entry.created_at.startsWith(selectedDate) ? { ...entry, mood: currentMood } : entry
           )
         );
         alert("Mood saved successfully!");
@@ -123,7 +124,7 @@ const Insights = () => {
         alert("Failed to save mood.");
       }
 
-      setShowModal(false); 
+      setShowModal(false);
     } else {
       alert("Please select a mood.");
     }
@@ -133,6 +134,7 @@ const Insights = () => {
     setShowModal(false); 
   };
 
+
   return (
     <View style={styles.container}>
       {loading ? (
@@ -140,22 +142,21 @@ const Insights = () => {
       ) : (
         <View style={styles.contentWrapper}>
 
-
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => setSelectedMonth(new Date(selectedMonth.setMonth(selectedMonth.getMonth() - 1)))} >
+            <TouchableOpacity onPress={() => setSelectedMonth(new Date(selectedMonth.setMonth(selectedMonth.getMonth() - 1)))}>
               <Text style={styles.navText}>{"<"}</Text>
             </TouchableOpacity>
             <Text style={styles.monthText}>
               {selectedMonth.toLocaleString("default", { month: "long" })} {selectedMonth.getFullYear()}
             </Text>
-            <TouchableOpacity onPress={() => setSelectedMonth(new Date(selectedMonth.setMonth(selectedMonth.getMonth() + 1)))} >
+            <TouchableOpacity onPress={() => setSelectedMonth(new Date(selectedMonth.setMonth(selectedMonth.getMonth() + 1)))}>
               <Text style={styles.navText}>{">"}</Text>
             </TouchableOpacity>
           </View>
 
           {/* Render the DaysList component */}
           <DaysList generateDaysData={generateDaysData} addOrEditMood={addOrEditMood} getMoodEmoji={getMoodEmoji} />
-          
+
           {/* Render the MoodSelectorModal component */}
           <MoodSelectorModal
             visible={showModal}
@@ -164,6 +165,8 @@ const Insights = () => {
             saveMood={saveMood}
             cancelMood={cancelMood}
           />
+
+
         </View>
       )}
     </View>
@@ -191,6 +194,17 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  syncButton: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: "#4CAF50",
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  syncText: {
+    color: "#fff",
+    fontSize: 16,
   },
 });
 

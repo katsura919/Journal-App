@@ -4,7 +4,7 @@ export const getMoodForToday = async (userId, db) => {
   try {
     // Fetching a single entry for today and the user
     const result = await db.getFirstAsync(
-      'SELECT * FROM moods WHERE user_id = ? AND date = ?',
+      'SELECT * FROM moods WHERE user_id = ? AND created_at = ?',
       [userId, today]
     );
     
@@ -26,8 +26,8 @@ export const saveMood = async (userId, mood, db) => {
   try {
     // Inserting the mood entry into the database
     await db.runAsync(
-      'INSERT INTO moods (user_id, mood, date, created_at) VALUES (?, ?, ?, ?)',
-      [userId, mood, today, createdAt]
+      'INSERT INTO moods (user_id, mood, created_at, mood_status, sync_status) VALUES (?, ?, ?, ?, ?)',
+      [userId, mood, today, createdAt, 'active', 'pending']
     );
     console.log('Mood saved successfully!');
   } catch (error) {

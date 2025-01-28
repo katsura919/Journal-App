@@ -17,7 +17,6 @@ const App = () => {
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             journal_status TEXT,
-            version INTEGER,
             sync_status TEXT
           );
         
@@ -25,8 +24,9 @@ const App = () => {
             mood_id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
             mood TEXT,  
-            date TEXT,  -- Store the date in 'YYYY-MM-DD' format
-            created_at TEXT
+            created_at TEXT,
+            mood_status TEXT,
+            sync_status TEXT
           );
       `);
       console.log('Database initialized!');

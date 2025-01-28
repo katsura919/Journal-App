@@ -8,7 +8,7 @@ import Login from './screens/Login';
 import Register from './screens/Register';
 import BottomNavigator from './BottomNavigator'; // Import the BottomNavigator
 import ViewJournal from './screens/ViewJournal';
-import Chat from './screens/Chat';
+import Chats from './screens/Chats';
 const Stack = createStackNavigator();
 
 const AppNavigator = () => {
@@ -46,6 +46,7 @@ const AppNavigator = () => {
             <Stack.Screen name="Register" component={Register} />
             <Stack.Screen name="Home" component={BottomNavigator} />
             <Stack.Screen name="ViewJournal" component={ViewJournal} />
+            <Stack.Screen name="Chats" component={Chats} />
       </Stack.Navigator>
     </NavigationContainer>
   );

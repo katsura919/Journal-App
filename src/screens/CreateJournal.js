@@ -62,22 +62,30 @@ const CreateJournal = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Create Journal Entry</Text>
+      <View style={styles.headerContainer}>
+          <Text style={styles.headerText}>
+              Create Journal
+          </Text>
+        </View>
+      <View style={styles.inputsContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Title"
+            placeholderTextColor="#888"
+            value={title}
+            onChangeText={setTitle}
+          />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Title"
-        value={title}
-        onChangeText={setTitle}
-      />
-
-      <TextInput
-        style={styles.textarea}
-        placeholder="Content"
-        value={content}
-        onChangeText={setContent}
-        multiline
-      />
+          <TextInput
+            style={styles.textarea}
+            placeholder="Content"
+            placeholderTextColor="#888"
+            value={content}
+            onChangeText={setContent}
+            multiline
+          />
+      </View>
+      
 
       <Button title="Save Journal" onPress={handleSaveJournal} />
     </View>
@@ -87,31 +95,43 @@ const CreateJournal = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
+    alignItems: 'center',
+    backgroundColor: '#1c1c1c'
   },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
+  headerContainer:{
+    marginTop: 20,
+  },  
+  headerText:{
+    fontSize: 20,
+    color: '#d4d5d4'
+  },
+  inputsContainer:{
+    width: '100%',
+    padding: 20
+   
   },
   input: {
+    width: '100%',
     height: 40,
-    borderColor: '#ccc',
+    borderColor: '#60ae73',
     borderWidth: 1,
     marginBottom: 10,
     paddingLeft: 10,
     borderRadius: 5,
+    color: '#d4d5d4',
+    borderRadius: 20,
   },
   textarea: {
+    width: '100%',
     height: 150,
-    borderColor: '#ccc',
+    borderColor: '#60ae73',
     borderWidth: 1,
     marginBottom: 20,
     paddingLeft: 10,
     paddingTop: 10,
     borderRadius: 5,
     textAlignVertical: 'top',
+    borderRadius: 20,
   },
 });
 

@@ -4,11 +4,9 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Home from './screens/Home';
 import CreateJournal from './screens/CreateJournal'; 
 import JournalList from './screens/JournalLists';
-import Profile from './screens/Profile'; // Assuming you have a Profile screen
-import Settings from './screens/Settings'; // Assuming you have a Settings screen
-import Chat from './screens/Chat';
-import Chats from './screens/Chats';
-import Reminder from './screens/Reminder';
+import Insights from './screens/Insights'; 
+import Profile from './screens/Profile'; 
+
 const Tab = createBottomTabNavigator();
 
 const BottomNavigator = () => {
@@ -17,30 +15,37 @@ const BottomNavigator = () => {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
-          if (route.name === 'HomeTab') {
+          if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'Create') {
-            iconName = focused ? 'settings' : 'settings-outline';
-          }else if (route.name === 'Lists') {
-            iconName = focused ? 'settings' : 'settings-outline';
-          }else if (route.name === 'Profile') {
+            iconName = focused ? 'create' : 'create-outline';
+          } else if (route.name === 'Lists') {
+            iconName = focused ? 'journal' : 'journal-outline';
+          } else if (route.name === 'Insights') {
+            iconName = focused ? 'bar-chart' : 'bar-chart-outline';
+          } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
-          } else if (route.name === 'Settings') {
-            iconName = focused ? 'settings' : 'settings-outline';
           }
-          
+
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: 'tomato',
+        tabBarActiveTintColor: '#60ae73',
         tabBarInactiveTintColor: 'gray',
+        tabBarStyle: {
+          backgroundColor: '#404140', // Background color
+          borderTopColor: 'transparent', // Remove top border
+          height: 60, // Height of the tab bar
+          paddingTop: '5',
+          borderTopWidth: 0,
+        },
         headerShown: false,
       })}
     >
-      <Tab.Screen name="HomeTab" component={Home} />
+      <Tab.Screen name="Home" component={Home} />
       <Tab.Screen name="Create" component={CreateJournal} />
       <Tab.Screen name="Lists" component={JournalList} />
+      <Tab.Screen name="Insights" component={Insights} />
       <Tab.Screen name="Profile" component={Profile} />
-      <Tab.Screen name="Reminder" component={Reminder} />
     </Tab.Navigator>
   );
 };

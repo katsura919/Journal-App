@@ -45,8 +45,13 @@ const JournalList = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Your Journal Entries</Text>
+       <View style={styles.headerContainer}>
+            <Text style={styles.headerText}>
+                Journals
+            </Text>
+        </View>
 
+    <View style={styles.journalContainer}>
       <FlatList
         data={journalEntries}
         renderItem={({ item }) => (
@@ -59,36 +64,44 @@ const JournalList = ({ navigation }) => {
         keyExtractor={(item) => item.entry_id.toString()} // Use entry_id as the key
       />
     </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
+    alignItems: 'center',
+    backgroundColor: '#1c1c1c'
   },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
+  headerContainer:{
+    marginTop: 20,
+  },  
+  headerText:{
+    fontSize: 20,
+    color: '#d4d5d4'
+  },
+  journalContainer:{
+    width: '100%',
+    padding: 20
   },
   entry: {
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: '#60ae73',
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#d4d5d4'
   },
   date: {
     fontSize: 14,
-    color: '#888',
+    color: '#d4d5d4',
   },
   content: {
     fontSize: 16,
-    color: '#333',
+    color: '#d4d5d4',
   },
 });
 

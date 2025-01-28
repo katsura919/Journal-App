@@ -1,193 +1,112 @@
-// Profile.js
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useSQLiteContext } from "expo-sqlite";
-import MoodSelectorModal from "./components/MoodSelectorModal";
-import DaysList from "./components/DaysList";
+import React, { useEffect, useState } from 'react';
+import { View, Text, Button, StyleSheet, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+import { useSQLiteContext } from 'expo-sqlite';
+import { syncIfOnline } from './utils/syncUtils'; // Import the sync utility
 
-const Profile = () => {
-  const db = useSQLiteContext();
-  const [userId, setUserId] = useState(null);
-  const [moodEntries, setMoodEntries] = useState([]);
-  const [selectedMonth, setSelectedMonth] = useState(new Date());
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedDate, setSelectedDate] = useState("");
-  const [currentMood, setCurrentMood] = useState("");
+const Profile = ({ navigation }) => {
+  const db = useSQLiteContext(); // Initialize SQLite context
+  const [internet, setInternet] = useState();
+  const [userData, setUserData] = useState({
+    user_id: null,
+    firstname: '',
+    lastname: '',
+  });
 
+  // Fetch user data and listen for network changes to sync data when online
   useEffect(() => {
-    const fetchUserId = async () => {
-      const storedUserId = await AsyncStorage.getItem("userId");
-      setUserId(storedUserId);
+    const fetchUserData = async () => {
+      try {
+        const user_id = await AsyncStorage.getItem('userId');
+        const firstname = await AsyncStorage.getItem('firstname');
+        const lastname = await AsyncStorage.getItem('lastname');
+
+        if (user_id && firstname && lastname) {
+          setUserData({ user_id, firstname, lastname });
+
+          // Start listening for network changes
+          const unsubscribe = NetInfo.addEventListener(async (state) => {
+            console.log("Network state changed:", state.isConnected ? "Online" : "Offline");
+            setInternet(state.isConnected ? "Online" : "Offline");
+
+            if (state.isConnected) {
+              try {
+                await syncIfOnline(user_id, db); // Call the sync function
+                Alert.alert("Success", "Data synchronization completed successfully!");
+              } catch (error) {
+                console.error("Error during synchronization:", error);
+                Alert.alert("Error", "An error occurred during synchronization. Please try again.");
+              }
+            }
+          });
+
+          // Cleanup the listener when the component unmounts
+          return () => unsubscribe();
+        } else {
+          Alert.alert('Error', 'User data is missing. Please log in again.');
+        }
+      } catch (error) {
+        console.error('Error fetching user data from AsyncStorage:', error);
+        Alert.alert('Error', 'An error occurred while fetching user data.');
+      }
     };
 
-    fetchUserId();
+    fetchUserData();
   }, []);
 
-  useEffect(() => {
-    if (userId) {
-      fetchMoodEntries();
-    }
-  }, [selectedMonth, userId]);
-
-  const fetchMoodEntries = async () => {
-    const year = selectedMonth.getFullYear();
-    const month = String(selectedMonth.getMonth() + 1).padStart(2, "0");
-    const dateLike = `${year}-${month}-%`;
-
+  const handleLogout = async () => {
     try {
-      const result = await db.getAllAsync(
-        "SELECT * FROM moods WHERE date LIKE ? AND user_id = ? ORDER BY created_at DESC",
-        [dateLike, userId]
-      );
-      setMoodEntries(result);
+      await AsyncStorage.removeItem('userToken');
+      await AsyncStorage.removeItem('userId');
+      await AsyncStorage.removeItem('firstname');
+      await AsyncStorage.removeItem('lastname');
+      Alert.alert('Logged Out', 'You have been logged out successfully.');
+      navigation.replace('Login');
     } catch (error) {
-      console.error("Error fetching mood entries:", error);
-    } finally {
-      setLoading(false);
+      Alert.alert('Error', 'An error occurred while logging out.');
     }
-  };
-
-  const getMoodEmoji = (mood) => {
-    switch (mood) {
-      case "happy":
-        return "😄";
-      case "neutral":
-        return "😐";
-      case "sad":
-        return "😢";
-      default:
-        return "➕";
-    }
-  };
-
-  const generateDaysData = () => {
-    const daysInMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0).getDate();
-    const firstDayOfWeek = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1).getDay();
-    const days = [];
-    const today = new Date().toISOString().split("T")[0];
-
-    for (let i = 0; i < firstDayOfWeek; i++) {
-      days.push(null);
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateKey = `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      const entry = moodEntries.find((entry) => entry.date === dateKey);
-      const mood = entry ? entry.mood : null;
-      const isToday = dateKey === today;
-
-      days.push({ dateKey, day, mood, isToday });
-    }
-
-    return days;
-  };
-
-  const addOrEditMood = (date) => {
-    const existingEntry = moodEntries.find((entry) => entry.date === date);
-    setSelectedDate(date);
-
-    if (!existingEntry) {
-      setCurrentMood(""); 
-      setShowModal(true);
-    } else {
-      setCurrentMood(existingEntry.mood); 
-      setShowModal(true);
-    }
-  };
-
-  const saveMood = async () => {
-    if (currentMood) {
-      try {
-        if (moodEntries.some((entry) => entry.date === selectedDate)) {
-          await db.runAsync(
-            "UPDATE moods SET mood = ? WHERE date = ? AND user_id = ?",
-            [currentMood, selectedDate, userId]
-          );
-        } else {
-          await db.runAsync(
-            "INSERT INTO moods (user_id, date, mood) VALUES (?, ?, ?)",
-            [userId, selectedDate, currentMood]
-          );
-        }
-
-        setMoodEntries((prevEntries) =>
-          prevEntries.map((entry) =>
-            entry.date === selectedDate ? { ...entry, mood: currentMood } : entry
-          )
-        );
-        alert("Mood saved successfully!");
-      } catch (error) {
-        console.error("Error saving mood:", error);
-        alert("Failed to save mood.");
-      }
-
-      setShowModal(false); 
-    } else {
-      alert("Please select a mood.");
-    }
-  };
-
-  const cancelMood = () => {
-    setShowModal(false); 
   };
 
   return (
     <View style={styles.container}>
-      {loading ? (
-        <ActivityIndicator size="large" color="#4CAF50" />
-      ) : (
-        <View style={styles.contentWrapper}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => setSelectedMonth(new Date(selectedMonth.setMonth(selectedMonth.getMonth() - 1)))} >
-              <Text style={styles.navText}>{"<"}</Text>
-            </TouchableOpacity>
-            <Text style={styles.monthText}>
-              {selectedMonth.toLocaleString("default", { month: "long" })} {selectedMonth.getFullYear()}
-            </Text>
-            <TouchableOpacity onPress={() => setSelectedMonth(new Date(selectedMonth.setMonth(selectedMonth.getMonth() + 1)))} >
-              <Text style={styles.navText}>{">"}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Render the DaysList component */}
-          <DaysList generateDaysData={generateDaysData} addOrEditMood={addOrEditMood} getMoodEmoji={getMoodEmoji} />
-          
-          {/* Render the MoodSelectorModal component */}
-          <MoodSelectorModal
-            visible={showModal}
-            currentMood={currentMood}
-            setCurrentMood={setCurrentMood}
-            saveMood={saveMood}
-            cancelMood={cancelMood}
-          />
-        </View>
+      <Text style={styles.title}>Welcome to AI Journal!</Text>
+      {userData.user_id && (
+        <>
+          <Text style={styles.userInfo}>User ID: {userData.user_id}</Text>
+          <Text style={styles.userInfo}>First Name: {userData.firstname}</Text>
+          <Text style={styles.userInfo}>Last Name: {userData.lastname}</Text>
+          <Text style={styles.userInfo}>{internet}</Text>
+        </>
       )}
+      <Button title="Logout" onPress={handleLogout} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-
-    backgroundColor: "#121212",
+  container: { 
+    flex: 1, 
+    alignItems: 'center',
+    backgroundColor: '#1c1c1c'
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
+  title: { 
+    fontSize: 24, 
+    marginBottom: 20, 
+    textAlign: 'center',
+     color: '#d4d5d4'
   },
-  navText: {
-    color: "#fff",
-    fontSize: 20,
+  userInfo: { 
+    fontSize: 18, 
+    marginBottom: 10, 
+    textAlign: 'center',
+    color: '#d4d5d4'
   },
-  monthText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
+  status: { 
+    fontSize: 16, 
+    marginTop: 20, 
+    textAlign: 'center',
+    color: '#d4d5d4'
   },
 });
 

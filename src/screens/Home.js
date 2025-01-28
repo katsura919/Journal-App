@@ -1,6 +1,6 @@
-// Home.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, Alert, StatusBar } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, Alert, StatusBar, TouchableOpacity } from 'react-native';
+import LottieView from 'lottie-react-native'; // Import LottieView
 import { getMoodForToday, saveMood } from './utils/moodUtils';
 import { useSQLiteContext } from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,7 +9,6 @@ import { syncIfOnline } from './utils/syncUtils';
 import MoodSelector from './components/MoodSelector.js';
 
 const Home = ({ navigation }) => {
-  
   const db = useSQLiteContext();
   const [internet, setInternet] = useState();
   const [userData, setUserData] = useState({
@@ -96,14 +95,24 @@ const Home = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar></StatusBar>
+      <StatusBar />
       <View style={styles.headerContainer}>
-          <Text style={styles.headerText}>
-              Home
-          </Text>
+        <Text style={styles.headerText}>Home</Text>
       </View>
+
+      <View style={styles.lottieIcon}>
+      <TouchableOpacity onPress={() => navigation.navigate('Chats')}>
+        <LottieView
+          source={require('../../assets/animations/chat.json')} // Your Lottie JSON file
+          autoPlay
+          loop
+          style={styles.lottieIcon}
+        />
+      </TouchableOpacity>
+      </View>
+
       {!moodEntryExists && (
-        <View>
+        <View style={styles.moodContainer}>
           <Text style={styles.text}>How are you feeling today?</Text>
           <MoodSelector handleMoodSelect={handleMoodSelect} />
         </View>
@@ -116,18 +125,35 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#333',
+    backgroundColor: '#1c1c1c',
   },
-  headerContainer:{
-    
+  headerContainer: {
+    marginTop: 20,
   },
-  headerText:{
+  headerText: {
     fontSize: 20,
-
+    color: '#d4d5d4',
+  },
+  lottieIcon: {
+    width: 90,
+    height: 90,
+    position: 'absolute',
+    top: -6,
+    right: -10
+  },
+  moodContainer: {
+    borderWidth: 1,
+    borderColor: '#60ae73',
+    borderRadius: 20,
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    gap: 10,
+    padding: 15,
+    marginTop: 20,
   },
   text: {
     fontSize: 18,
-    marginBottom: 10,
+    color: '#d4d5d4',
   },
 });
 

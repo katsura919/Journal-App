@@ -3,24 +3,32 @@ import {
   View,
   TextInput,
   Text,
-  Button,
+  TouchableOpacity,
   FlatList,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import Markdown from "react-native-markdown-display";
+import { useTheme, themes } from "../../context/ThemeContext.js";
+import { Ionicons } from "@expo/vector-icons";
 
-const ChatScreen = () => {
+const Chats = () => {
+  const { theme } = useTheme();
   const [userInput, setUserInput] = useState("");
-  const [messages, setMessages] = useState([]); // Stores the conversation history
+  const [messages, setMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [typingMessage, setTypingMessage] = useState("");
 
   const sendMessageToMark = async () => {
     if (!userInput.trim()) return;
 
-    // Add user's message to the messages list
     const userMessage = { role: "user", message: userInput };
     setMessages((prevMessages) => [...prevMessages, userMessage]);
+
+    setIsLoading(true);
+    setUserInput("");
 
     try {
       const res = await fetch("http://10.0.2.2:5000/api/chat", {
@@ -32,18 +40,23 @@ const ChatScreen = () => {
       const data = await res.json();
       const markMessage = { role: "mark", message: data.response };
 
-      // Add Mark's response to the messages list
-      setMessages((prevMessages) => [...prevMessages, markMessage]);
+      let i = 0;
+      const typingInterval = setInterval(() => {
+        if (i < markMessage.message.length) {
+          setTypingMessage(markMessage.message.substring(0, i + 1));
+          i++;
+        } else {
+          clearInterval(typingInterval);
+          setIsLoading(false);
+          setMessages((prevMessages) => [...prevMessages, markMessage]);
+          setTypingMessage("");
+        }
+      }, 30);
     } catch (error) {
       console.error("Error:", error);
-      const errorMessage = {
-        role: "mark",
-        message: "An error occurred. Please try again.",
-      };
-      setMessages((prevMessages) => [...prevMessages, errorMessage]);
+      setIsLoading(false);
+      setMessages((prevMessages) => [...prevMessages, { role: "mark", message: "An error occurred. Please try again." }]);
     }
-
-    setUserInput(""); // Clear the input field
   };
 
   const renderMessage = ({ item }) => {
@@ -53,10 +66,11 @@ const ChatScreen = () => {
         style={[
           styles.messageContainer,
           isUser ? styles.userMessage : styles.markMessage,
+          { backgroundColor: themes[theme]?.messageBackground, borderColor: themes[theme]?.border },
         ]}
       >
         {isUser ? (
-          <Text style={styles.messageText}>{item.message}</Text>
+          <Text style={[styles.messageText, { color: themes[theme]?.text }]}>{item.message}</Text>
         ) : (
           <Markdown style={styles.markdown}>{item.message}</Markdown>
         )}
@@ -67,23 +81,42 @@ const ChatScreen = () => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: themes[theme]?.background }]}
     >
       <FlatList
         data={messages}
         keyExtractor={(_, index) => index.toString()}
         renderItem={renderMessage}
         contentContainerStyle={styles.chatContainer}
+        ListEmptyComponent={<Text style={[styles.promptText, { color: themes[theme]?.textSecondary }]}>What do you want to talk about?</Text>}
       />
 
-      <View style={styles.inputContainer}>
+      {isLoading && (
+        <View style={styles.typingContainer}>
+          <Text style={[styles.typingText, { color: themes[theme]?.textSecondary }]}>Typing</Text>
+          <View style={styles.dotsContainer}>
+            <ActivityIndicator size="small" color={themes[theme]?.accent} />
+          </View>
+        </View>
+      )}
+
+      {typingMessage && (
+        <View style={[styles.messageContainer, styles.markMessage]}>
+          <Markdown style={styles.markdown}>{typingMessage}</Markdown>
+        </View>
+      )}
+
+      <View style={[styles.inputContainer, { backgroundColor: themes[theme]?.inputBackground }]}>        
         <TextInput
           placeholder="Type your message..."
+          placeholderTextColor={themes[theme]?.textSecondary}
           value={userInput}
           onChangeText={setUserInput}
-          style={styles.input}
+          style={[styles.input, { color: themes[theme]?.text, borderColor: themes[theme]?.border }]}
         />
-        <Button title="Send" onPress={sendMessageToMark} />
+        <TouchableOpacity onPress={sendMessageToMark} style={[styles.sendButton, { backgroundColor: themes[theme]?.accent }]}>          
+          <Ionicons name="send" size={24} color="#fff" />
+        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
@@ -92,7 +125,6 @@ const ChatScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9f9f9",
   },
   chatContainer: {
     padding: 10,
@@ -104,37 +136,55 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 10,
     marginVertical: 5,
+    borderWidth: 1,
   },
   userMessage: {
     alignSelf: "flex-end",
-    backgroundColor: "#d1f7c4",
   },
   markMessage: {
     alignSelf: "flex-start",
-    backgroundColor: "#e1e1e1",
   },
   messageText: {
     fontSize: 16,
   },
   markdown: {
     body: { fontSize: 16 },
-    text: { color: "#000" },
   },
   inputContainer: {
     flexDirection: "row",
     padding: 10,
     borderTopWidth: 1,
-    borderColor: "#ccc",
-    backgroundColor: "#fff",
   },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#ccc",
     borderRadius: 10,
     padding: 10,
     marginRight: 10,
   },
+  sendButton: {
+    padding: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  promptText: {
+    textAlign: "center",
+    fontSize: 18,
+    marginTop: 20,
+  },
+  typingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+  },
+  typingText: {
+    fontSize: 16,
+    marginRight: 5,
+  },
+  dotsContainer: {
+    flexDirection: "row",
+  },
 });
 
-export default ChatScreen;
+export default Chats;

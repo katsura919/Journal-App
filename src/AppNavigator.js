@@ -9,6 +9,8 @@ import Register from './screens/Register';
 import BottomNavigator from './BottomNavigator'; // Import the BottomNavigator
 import ViewJournal from './screens/Journal/ViewJournal';
 import Chats from './screens/Chat/Chats';
+import Settings from './screens/Settings/Settings';
+import Themes from './screens/Settings/Themes';
 const Stack = createStackNavigator();
 
 const AppNavigator = () => {
@@ -47,6 +49,8 @@ const AppNavigator = () => {
             <Stack.Screen name="Home" component={BottomNavigator} />
             <Stack.Screen name="ViewJournal" component={ViewJournal} />
             <Stack.Screen name="Chats" component={Chats} />
+            <Stack.Screen name="Settings" component={Settings} />
+            <Stack.Screen name="Themes" component={Themes} />
       </Stack.Navigator>
     </NavigationContainer>
   );

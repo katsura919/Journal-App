@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { useSQLiteContext } from 'expo-sqlite';
+import { MaterialIcons } from '@expo/vector-icons'; // For icons
 import { syncIfOnline } from '../../utils/syncUtils'; // Import the sync utility
 
 const Profile = ({ navigation }) => {
   const db = useSQLiteContext(); // Initialize SQLite context
-  const [internet, setInternet] = useState();
+  const [internet, setInternet] = useState('Checking...');
   const [userData, setUserData] = useState({
     user_id: null,
     firstname: '',
@@ -55,58 +56,104 @@ const Profile = ({ navigation }) => {
     fetchUserData();
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem('userToken');
-      await AsyncStorage.removeItem('userId');
-      await AsyncStorage.removeItem('firstname');
-      await AsyncStorage.removeItem('lastname');
-      Alert.alert('Logged Out', 'You have been logged out successfully.');
-      navigation.replace('Login');
-    } catch (error) {
-      Alert.alert('Error', 'An error occurred while logging out.');
-    }
-  };
-
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to AI Journal!</Text>
-      {userData.user_id && (
-        <>
-          <Text style={styles.userInfo}>User ID: {userData.user_id}</Text>
-          <Text style={styles.userInfo}>First Name: {userData.firstname}</Text>
-          <Text style={styles.userInfo}>Last Name: {userData.lastname}</Text>
-          <Text style={styles.userInfo}>{internet}</Text>
-        </>
-      )}
-      <Button title="Logout" onPress={handleLogout} />
+      {/* Header with Settings Button */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Profile</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
+          <MaterialIcons name="settings" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Profile Picture */}
+      <View style={styles.profilePictureContainer}>
+        <Image
+          source={require('../../../assets/profiles/profile.png')} // Replace with your default profile image
+          style={styles.profilePicture}
+        />
+      </View>
+
+      {/* User Information */}
+      <View style={styles.userInfoContainer}>
+        <Text style={styles.userInfoLabel}>User ID</Text>
+        <Text style={styles.userInfoText}>{userData.user_id}</Text>
+
+        <Text style={styles.userInfoLabel}>First Name</Text>
+        <Text style={styles.userInfoText}>{userData.firstname}</Text>
+
+        <Text style={styles.userInfoLabel}>Last Name</Text>
+        <Text style={styles.userInfoText}>{userData.lastname}</Text>
+      </View>
+
+      {/* Network Status */}
+      <View style={styles.networkStatusContainer}>
+        <MaterialIcons
+          name={internet === 'Online' ? 'wifi' : 'wifi-off'}
+          size={20}
+          color={internet === 'Online' ? '#4CAF50' : '#F44336'}
+        />
+        <Text style={[styles.networkStatusText, { color: internet === 'Online' ? '#4CAF50' : '#F44336' }]}>
+          {internet}
+        </Text>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
+  container: {
+    flex: 1,
+    backgroundColor: '#1c1c1c',
+    padding: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#1c1c1c'
+    marginBottom: 20,
   },
-  title: { 
-    fontSize: 24, 
-    marginBottom: 20, 
-    textAlign: 'center',
-     color: '#d4d5d4'
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
   },
-  userInfo: { 
-    fontSize: 18, 
-    marginBottom: 10, 
-    textAlign: 'center',
-    color: '#d4d5d4'
+  profilePictureContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  status: { 
-    fontSize: 16, 
-    marginTop: 20, 
-    textAlign: 'center',
-    color: '#d4d5d4'
+  profilePicture: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  userInfoContainer: {
+    backgroundColor: '#2c2c2c',
+    borderRadius: 10,
+    padding: 20,
+    marginBottom: 20,
+  },
+  userInfoLabel: {
+    fontSize: 16,
+    color: '#a0a0a0',
+    marginBottom: 5,
+  },
+  userInfoText: {
+    fontSize: 18,
+    color: '#fff',
+    marginBottom: 15,
+  },
+  networkStatusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  networkStatusText: {
+    fontSize: 16,
+    marginLeft: 10,
   },
 });
 

@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, Alert, StatusBar, TouchableOpacity } from 'react-native';
-import LottieView from 'lottie-react-native'; // Import LottieView
+import LottieView from 'lottie-react-native';
 import { getMoodForToday, saveMood } from '../../utils/moodUtils.js';
 import { useSQLiteContext } from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { syncIfOnline, syncMoodsIfOnline } from '../../utils/syncUtils.js';
 import MoodSelector from './components/MoodSelector.js';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useTheme } from '../../context/ThemeContext.js';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
 const Home = ({ navigation }) => {
   const db = useSQLiteContext();
-  const [internet, setInternet] = useState();
+  const { theme, animatedBackground } = useTheme();
+  const [internet, setInternet] = useState('Checking...');
   const [userData, setUserData] = useState({
     user_id: null,
     firstname: '',
@@ -19,6 +23,10 @@ const Home = ({ navigation }) => {
   const [userId, setUserId] = useState(null);
   const [moodEntryExists, setMoodEntryExists] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    backgroundColor: animatedBackground.value,
+  }));
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -29,7 +37,6 @@ const Home = ({ navigation }) => {
         console.error('Error fetching userId from AsyncStorage:', error);
       }
     };
-
     fetchUserId();
   }, []);
 
@@ -79,7 +86,6 @@ const Home = ({ navigation }) => {
         Alert.alert('Error', 'An error occurred while fetching user data.');
       }
     };
-
     fetchUserData();
   }, []);
 
@@ -95,30 +101,29 @@ const Home = ({ navigation }) => {
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar />
+    <Animated.View style={[styles.container, animatedStyle]}>
+      <StatusBar/>
       <View style={styles.headerContainer}>
-        <Text style={styles.headerText}>Home</Text>
-      </View>
-
-      <View style={styles.lottieIcon}>
-      <TouchableOpacity onPress={() => navigation.navigate('Chats')}>
-        <LottieView
-          source={require('../../../assets/animations/chat.json')} // Your Lottie JSON file
-          autoPlay
-          loop
-          style={styles.lottieIcon}
-        />
-      </TouchableOpacity>
+        <Text style={[styles.headerText, { color: theme === 'navy' ? '#64FFDA' : theme === 'dark' ? '#FFF' : '#000' }]}>Welcome, {userData.firstname}!</Text>
+        <View style={styles.networkStatus}>
+          <MaterialIcons
+            name={internet === 'Online' ? 'wifi' : 'wifi-off'}
+            size={20}
+            color={internet === 'Online' ? '#4CAF50' : '#F44336'}
+          />
+          <Text style={[styles.networkStatusText, { color: internet === 'Online' ? '#4CAF50' : '#F44336' }]}>
+            {internet}
+          </Text>
+        </View>
       </View>
 
       {!moodEntryExists && (
         <View style={styles.moodContainer}>
-          <Text style={styles.text}>How are you feeling today?</Text>
+          <Text style={[styles.text, { color: theme === 'navy' ? '#64FFDA' : theme === 'dark' ? '#FFF' : '#000' }]}>How are you feeling today?</Text>
           <MoodSelector handleMoodSelect={handleMoodSelect} />
         </View>
       )}
-    </View>
+    </Animated.View>
   );
 };
 
@@ -126,35 +131,40 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#1c1c1c',
+    padding: 20,
   },
   headerContainer: {
-    marginTop: 20,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   headerText: {
-    fontSize: 20,
-    color: '#d4d5d4',
+    fontSize: 24,
+    fontWeight: 'bold',
   },
-  lottieIcon: {
-    width: 90,
-    height: 90,
-    position: 'absolute',
-    top: -6,
-    right: -10
+  networkStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  networkStatusText: {
+    fontSize: 16,
+    marginLeft: 5,
   },
   moodContainer: {
+    width: '100%',
     borderWidth: 1,
-    borderColor: '#60ae73',
     borderRadius: 20,
-    justifyContent: 'space-around',
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 10,
-    padding: 15,
+    padding: 20,
     marginTop: 20,
   },
   text: {
     fontSize: 18,
-    color: '#d4d5d4',
+    marginBottom: 20,
+    textAlign: 'center',
   },
 });
 

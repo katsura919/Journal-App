@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import AppNavigator from './src/AppNavigator';
 import { SQLiteProvider } from 'expo-sqlite';
+import { ThemeProvider } from './src/context/ThemeContext';
 
 const App = () => {
 
@@ -36,7 +37,9 @@ const App = () => {
   };
   return (
     <SQLiteProvider databaseName='auth.db' onInit={initializeDatabase}>
-      <AppNavigator />
+      <ThemeProvider>
+          <AppNavigator />
+      </ThemeProvider>
     </SQLiteProvider>
   );
 };

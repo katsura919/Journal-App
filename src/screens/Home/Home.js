@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, Alert, StatusBar, TouchableOpacity } from 'react-native';
 import LottieView from 'lottie-react-native'; // Import LottieView
-import { getMoodForToday, saveMood } from './utils/moodUtils';
+import { getMoodForToday, saveMood } from '../../utils/moodUtils.js';
 import { useSQLiteContext } from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
-import { syncIfOnline, syncMoodsIfOnline } from './utils/syncUtils';
+import { syncIfOnline, syncMoodsIfOnline } from '../../utils/syncUtils.js';
 import MoodSelector from './components/MoodSelector.js';
 
 const Home = ({ navigation }) => {
@@ -104,7 +104,7 @@ const Home = ({ navigation }) => {
       <View style={styles.lottieIcon}>
       <TouchableOpacity onPress={() => navigation.navigate('Chats')}>
         <LottieView
-          source={require('../../assets/animations/chat.json')} // Your Lottie JSON file
+          source={require('../../../assets/animations/chat.json')} // Your Lottie JSON file
           autoPlay
           loop
           style={styles.lottieIcon}

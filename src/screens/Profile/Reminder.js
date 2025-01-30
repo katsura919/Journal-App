@@ -5,7 +5,7 @@ import {
   requestNotificationPermissions,
   scheduleNotification,
   loadReminderTime,
-} from "./utils/notifications";
+} from "../../utils/notifications";
 
 export default function Reminder() {
   const [time, setTime] = useState(new Date());

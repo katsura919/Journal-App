@@ -3,7 +3,7 @@ import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo'; // Import NetInfo
-import { syncIfOnline } from './utils/syncUtils'; // Import the sync utility
+import { syncIfOnline } from '../../utils/syncUtils'; // Import the sync utility
 
 const CreateJournal = ({ navigation }) => {
   const db = useSQLiteContext();

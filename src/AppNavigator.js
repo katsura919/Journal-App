@@ -7,8 +7,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import Login from './screens/Login';
 import Register from './screens/Register';
 import BottomNavigator from './BottomNavigator'; // Import the BottomNavigator
-import ViewJournal from './screens/ViewJournal';
-import Chats from './screens/Chats';
+import ViewJournal from './screens/Journal/ViewJournal';
+import Chats from './screens/Chat/Chats';
 const Stack = createStackNavigator();
 
 const AppNavigator = () => {

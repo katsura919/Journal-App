@@ -3,7 +3,7 @@ import { View, Text, Button, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { useSQLiteContext } from 'expo-sqlite';
-import { syncIfOnline } from './utils/syncUtils'; // Import the sync utility
+import { syncIfOnline } from '../../utils/syncUtils'; // Import the sync utility
 
 const Profile = ({ navigation }) => {
   const db = useSQLiteContext(); // Initialize SQLite context

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme, themes } from '../../context/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 
 const Themes = () => {
@@ -17,9 +17,9 @@ const Themes = () => {
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
         <Text style={styles.backButtonText}>Go Back</Text>
       </TouchableOpacity>
-      <Text style={[styles.title, { color: theme === 'navy' ? '#64FFDA' : theme === 'dark' ? '#FFF' : '#000' }]}>Select Theme</Text>
+      <Text style={[styles.title, { color: themes[theme]?.text || '#000' }]}>Select Theme</Text>
       
-      {['light', 'dark', 'navy'].map((themeName) => (
+      {Object.keys(themes).map((themeName) => (
         <TouchableOpacity
           key={themeName}
           style={[styles.button, theme === themeName && styles.selectedButton]}

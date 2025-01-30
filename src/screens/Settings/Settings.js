@@ -2,8 +2,11 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons'; // For icons
+import { useTheme, themes } from '../../context/ThemeContext'; // Import the Theme context
 
 const Settings = ({ navigation }) => {
+  const { theme } = useTheme(); // Access current theme and themes from context
+
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('userToken');
@@ -18,29 +21,24 @@ const Settings = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: themes[theme]?.background || '#fff' }]}>
       {/* Header with Back Button */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <MaterialIcons name="arrow-back" size={24} color="#fff" />
+          <MaterialIcons name="arrow-back" size={24} color={themes[theme]?.text || '#000'} />
         </TouchableOpacity>
-        <Text style={styles.title}>Settings</Text>
+        <Text style={[styles.title, { color: themes[theme]?.text || '#000' }]}>Settings</Text>
       </View>
 
       {/* Settings Options */}
-      <TouchableOpacity style={styles.option} onPress={() => navigation.navigate('Notifications')}>
-        <MaterialIcons name="notifications" size={24} color="#fff" />
-        <Text style={styles.optionText}>Notifications</Text>
-      </TouchableOpacity>
-
       <TouchableOpacity style={styles.option} onPress={() => navigation.navigate('Themes')}>
-        <MaterialIcons name="color-lens" size={24} color="#fff" />
-        <Text style={styles.optionText}>Theme</Text>
+        <MaterialIcons name="color-lens" size={24} color={themes[theme]?.text || '#000'} />
+        <Text style={[styles.optionText, { color: themes[theme]?.text || '#000' }]}>Theme</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.option} onPress={() => navigation.navigate('Privacy')}>
-        <MaterialIcons name="privacy-tip" size={24} color="#fff" />
-        <Text style={styles.optionText}>Privacy</Text>
+        <MaterialIcons name="privacy-tip" size={24} color={themes[theme]?.text || '#000'} />
+        <Text style={[styles.optionText, { color: themes[theme]?.text || '#000' }]}>Privacy</Text>
       </TouchableOpacity>
 
       {/* Logout Button */}
@@ -54,7 +52,6 @@ const Settings = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1c1c1c',
     padding: 20,
   },
   header: {
@@ -65,8 +62,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
-    marginLeft: 10,
   },
   option: {
     flexDirection: 'row',
@@ -77,7 +72,6 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 18,
-    color: '#fff',
     marginLeft: 10,
   },
   logoutButton: {

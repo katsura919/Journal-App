@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, Alert, StatusBar, TouchableOpacity } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, Alert, StatusBar } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { getMoodForToday, saveMood } from '../../utils/moodUtils.js';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -8,7 +8,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { syncIfOnline, syncMoodsIfOnline } from '../../utils/syncUtils.js';
 import MoodSelector from './components/MoodSelector.js';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useTheme } from '../../context/ThemeContext.js';
+import { useTheme, themes } from '../../context/ThemeContext.js'; 
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
 const Home = ({ navigation }) => {
@@ -102,9 +102,11 @@ const Home = ({ navigation }) => {
 
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
-      <StatusBar/>
+      <StatusBar />
       <View style={styles.headerContainer}>
-        <Text style={[styles.headerText, { color: theme === 'navy' ? '#64FFDA' : theme === 'dark' ? '#FFF' : '#000' }]}>Welcome, {userData.firstname}!</Text>
+        <Text style={[styles.headerText, { color: themes[theme]?.text || '#000' }]}>
+          Welcome, {userData.firstname}!
+        </Text>
         <View style={styles.networkStatus}>
           <MaterialIcons
             name={internet === 'Online' ? 'wifi' : 'wifi-off'}
@@ -119,7 +121,9 @@ const Home = ({ navigation }) => {
 
       {!moodEntryExists && (
         <View style={styles.moodContainer}>
-          <Text style={[styles.text, { color: theme === 'navy' ? '#64FFDA' : theme === 'dark' ? '#FFF' : '#000' }]}>How are you feeling today?</Text>
+          <Text style={[styles.text, { color: themes[theme]?.text || '#000' }]}>
+            How are you feeling today?
+          </Text>
           <MoodSelector handleMoodSelect={handleMoodSelect} />
         </View>
       )}

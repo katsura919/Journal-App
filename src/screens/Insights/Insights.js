@@ -5,6 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSQLiteContext } from "expo-sqlite";
 import MoodSelectorModal from "./components/MoodSelectorModal";
 import DaysList from "./components/DaysList";
+import MoodBarGraph from "./components/MoodBarGraph";
 
 const Insights = () => {
   const db = useSQLiteContext();
@@ -54,10 +55,14 @@ const Insights = () => {
     switch (mood) {
       case "happy":
         return "😄";
+      case "excited":
+        return "😃";
       case "neutral":
         return "😐";
       case "sad":
         return "😢";
+      case "angry":
+        return "😡";
       default:
         return "➕";
     }
@@ -165,6 +170,8 @@ const Insights = () => {
             saveMood={saveMood}
             cancelMood={cancelMood}
           />
+
+        <MoodBarGraph/>
 
 
         </View>

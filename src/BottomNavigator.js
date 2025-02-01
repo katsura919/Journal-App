@@ -15,7 +15,7 @@ const BottomNavigator = () => {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
-          if (route.name === 'Home') {
+          if (route.name === 'HomeTab') {
             iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'Create') {
             iconName = focused ? 'create' : 'create-outline';
@@ -41,9 +41,9 @@ const BottomNavigator = () => {
         headerShown: false,
       })}
     >
-      <Tab.Screen name="Home" component={Home} />
+      <Tab.Screen name="HomeTab" component={Home} />
       <Tab.Screen name="Create" component={CreateJournal} />
-      <Tab.Screen name="Lists" component={Chats} />
+      <Tab.Screen name="Lists" component={JournalList} />
       <Tab.Screen name="Insights" component={Insights} />
       <Tab.Screen name="Profile" component={Profile} />
     </Tab.Navigator>

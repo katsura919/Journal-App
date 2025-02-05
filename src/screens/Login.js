@@ -11,7 +11,7 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post(`${localAPI}/auth/login`, { username, password });
+      const response = await axios.post(`${deployAPI}/auth/login`, { username, password });
       const { token, user} = response.data;
 
       console.log(user.user_id, user.firstname, user.lastname);

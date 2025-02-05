@@ -6,7 +6,8 @@ import CreateJournal from './screens/Journal/CreateJournal';
 import JournalList from './screens/Journal/JournalLists';
 import Insights from './screens/Insights/Insights'; 
 import Profile from './screens/Profile/Profile'; 
-import Chats from './screens/Chat/Chats'
+import Chats from './screens/Chat/Chats';
+import VoiceChats from './screens/Chat/VoiceChats';
 const Tab = createBottomTabNavigator();
 
 const BottomNavigator = () => {
@@ -43,7 +44,7 @@ const BottomNavigator = () => {
     >
       <Tab.Screen name="HomeTab" component={Home} />
       <Tab.Screen name="Create" component={CreateJournal} />
-      <Tab.Screen name="Lists" component={JournalList} />
+      <Tab.Screen name="Lists" component={VoiceChats} />
       <Tab.Screen name="Insights" component={Insights} />
       <Tab.Screen name="Profile" component={Profile} />
     </Tab.Navigator>

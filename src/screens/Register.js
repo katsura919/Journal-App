@@ -13,7 +13,7 @@ const Register = ({ navigation }) => {
 
   const handleRegister = async () => {
     try {
-      const response = await axios.post(`${localAPI}/auth/register`, {
+      const response = await axios.post(`${deployAPI}/auth/register`, {
         username,
         email,
         password,

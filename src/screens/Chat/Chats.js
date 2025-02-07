@@ -1,31 +1,39 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from "react";
+import {
+  View,
+  TextInput,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+} from "react-native";
+import Markdown from "react-native-markdown-display";
 import { useTheme, themes } from "../../context/ThemeContext.js";
-import { startRecording, stopRecording } from "../../utils/audiotUtils.js"; // Import the functions
-import * as Speech from "expo-speech"; // Import Expo Speech API
-import axios from "axios"; // Import Axios for API requests
+import { Ionicons } from "@expo/vector-icons";
 
-const VoiceChats = () => {
+const Chats = () => {
+  const localAPI = 'http://10.0.2.2:5000'
+  const deployAPI = 'https://journal-server-ot0w.onrender.com'
   const { theme } = useTheme();
-  const [recording, setRecording] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [transcription, setTranscription] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // Track loading state for AI response
-  const [typingMessage, setTypingMessage] = useState(""); // Track typing effect
-  const [messages, setMessages] = useState([]); // Store messages
+  const [userInput, setUserInput] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [typingMessage, setTypingMessage] = useState("");
 
-  // Function to send the message to the AI (reusing the sendMessageToMark logic)
-  const sendMessageToMark = async (userInput) => {
+  const sendMessageToMark = async () => {
     if (!userInput.trim()) return;
 
     const userMessage = { role: "user", message: userInput };
     setMessages((prevMessages) => [...prevMessages, userMessage]);
 
     setIsLoading(true);
+    setUserInput("");
 
     try {
-      const res = await fetch("http://10.0.2.2:5000/api/chat", {
+      const res = await fetch(`${deployAPI}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userInput }),
@@ -44,146 +52,141 @@ const VoiceChats = () => {
           setIsLoading(false);
           setMessages((prevMessages) => [...prevMessages, markMessage]);
           setTypingMessage("");
-          // Speak the response aloud
-          Speech.speak(markMessage.message, { language: "en", pitch: 1, rate: 1 });
         }
       }, 30);
     } catch (error) {
       console.error("Error:", error);
       setIsLoading(false);
       setMessages((prevMessages) => [...prevMessages, { role: "mark", message: "An error occurred. Please try again." }]);
-      Speech.speak("Sorry, I couldn't reach the AI. Please try again later.", { language: "en", pitch: 1, rate: 1 });
     }
   };
 
-  // Handle the recording button press and start/stop the recording
-  const handleRecordButtonPress = () => {
-    if (recording) {
-      stopRecording(recording, setTranscription, setIsUploading);
-    } else {
-      startRecording(setRecording);
-    }
+  const renderMessage = ({ item }) => {
+    const isUser = item.role === "user";
+    return (
+      <View
+        style={[
+          styles.messageContainer,
+          isUser ? styles.userMessage : styles.markMessage,
+          { backgroundColor: themes[theme]?.messageBackground, borderColor: themes[theme]?.border },
+        ]}
+      >
+        {isUser ? (
+          <Text style={[styles.messageText, { color: themes[theme]?.text }]}>{item.message}</Text>
+        ) : (
+          <Markdown style={styles.markdown}>{item.message}</Markdown>
+        )}
+      </View>
+    );
   };
-
-  useEffect(() => {
-    if (transcription) {
-      sendMessageToMark(transcription); // Send the transcription to the AI
-      setTranscription(""); // Clear the transcription after sending
-    }
-  }, [transcription]);
 
   return (
-    <View style={[styles.container, { backgroundColor: themes[theme]?.background }]}>
-      <Text style={[styles.title, { color: themes[theme]?.text }]}>Talk to AI</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={[styles.container, { backgroundColor: themes[theme]?.background }]}
+    >
+      <FlatList
+        data={messages}
+        keyExtractor={(_, index) => index.toString()}
+        renderItem={renderMessage}
+        contentContainerStyle={styles.chatContainer}
+        ListEmptyComponent={<Text style={[styles.promptText, { color: themes[theme]?.textSecondary }]}>What do you want to talk about?</Text>}
+      />
 
-      <View style={styles.transcriptionBox}>
-        <Text style={[styles.transcriptionText, { color: themes[theme]?.text }]}>
-          {transcription || "Press the mic and start talking..."}
-        </Text>
-      </View>
-
-      {isUploading && <ActivityIndicator size="large" color={themes[theme]?.accent} />}
-      {isLoading && <ActivityIndicator size="small" color={themes[theme]?.accent} />}
-
-      <TouchableOpacity
-        style={[styles.micButton, { backgroundColor: recording ? "red" : themes[theme]?.accent }]}
-        onPress={handleRecordButtonPress}
-      >
-        <Ionicons name={recording ? "stop-circle" : "mic"} size={40} color="white" />
-      </TouchableOpacity>
+      {isLoading && (
+        <View style={styles.typingContainer}>
+          <Text style={[styles.typingText, { color: themes[theme]?.textSecondary }]}>Typing</Text>
+          <View style={styles.dotsContainer}>
+            <ActivityIndicator size="small" color={themes[theme]?.accent} />
+          </View>
+        </View>
+      )}
 
       {typingMessage && (
-        <View style={styles.typingContainer}>
-          <Text style={[styles.typingText, { color: themes[theme]?.textSecondary }]}>Typing...</Text>
-          <ActivityIndicator size="small" color={themes[theme]?.accent} />
+        <View style={[styles.messageContainer, styles.markMessage]}>
+          <Markdown style={styles.markdown}>{typingMessage}</Markdown>
         </View>
       )}
 
-      {messages.length > 0 && (
-        <View style={styles.messagesContainer}>
-          {messages.map((msg, index) => (
-            <View
-              key={index}
-              style={[
-                styles.message,
-                msg.role === "user" ? styles.userMessage : styles.markMessage,
-                { backgroundColor: themes[theme]?.messageBackground },
-              ]}
-            >
-              <Text style={[styles.messageText, { color: themes[theme]?.text }]}>
-                {msg.message}
-              </Text>
-            </View>
-          ))}
-        </View>
-      )}
-    </View>
+      <View style={[styles.inputContainer, { backgroundColor: themes[theme]?.inputBackground }]}>        
+        <TextInput
+          placeholder="Type your message..."
+          placeholderTextColor={themes[theme]?.textSecondary}
+          value={userInput}
+          onChangeText={setUserInput}
+          style={[styles.input, { color: themes[theme]?.text, borderColor: themes[theme]?.border }]}
+        />
+        <TouchableOpacity onPress={sendMessageToMark} style={[styles.sendButton, { backgroundColor: themes[theme]?.accent }]}>          
+          <Ionicons name="send" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  transcriptionBox: {
-    width: "100%",
-    minHeight: 80,
-    padding: 15,
-    borderRadius: 10,
-    borderWidth: 1,
-    textAlign: "center",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  transcriptionText: {
-    fontSize: 18,
-    textAlign: "center",
-  },
-  micButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  typingContainer: {
-    marginTop: 20,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  typingText: {
-    fontSize: 16,
-  },
-  messagesContainer: {
-    width: "100%",
-    marginTop: 20,
-  },
-  message: {
+  chatContainer: {
     padding: 10,
-    borderRadius: 10,
-    marginBottom: 10,
+    flexGrow: 1,
+    justifyContent: "flex-end",
+  },
+  messageContainer: {
+    maxWidth: "75%",
+    borderRadius: 15,
+    padding: 10,
+    marginVertical: 5,
+    borderWidth: 1,
   },
   userMessage: {
-    backgroundColor: "#d1e7dd",
-    alignSelf: "flex-start",
+    alignSelf: "flex-end",
   },
   markMessage: {
-    backgroundColor: "#f8d7da",
-    alignSelf: "flex-end",
+    alignSelf: "flex-start",
   },
   messageText: {
     fontSize: 16,
   },
+  markdown: {
+    body: { fontSize: 16 },
+  },
+  inputContainer: {
+    flexDirection: "row",
+    padding: 10,
+    borderTopWidth: 1,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 10,
+    marginRight: 10,
+  },
+  sendButton: {
+    padding: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  promptText: {
+    textAlign: "center",
+    fontSize: 18,
+    marginTop: 20,
+  },
+  typingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+  },
+  typingText: {
+    fontSize: 16,
+    marginRight: 5,
+  },
+  dotsContainer: {
+    flexDirection: "row",
+  },
 });
 
-export default VoiceChats;
+export default Chats;
